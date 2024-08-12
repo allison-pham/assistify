@@ -10,6 +10,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
 
   const sendMessage = async () => {
+    if (!message.trim()) return;
     setMessage("");
 
     const userMessage = { role: "user", content: message };
@@ -33,7 +34,6 @@ export default function Home() {
         },
         body: JSON.stringify([...messages, userMessage]),
       });
-
 
       if (!response.ok) {
         throw new Error(`Error:  ${response.statusText}`);
@@ -61,7 +61,6 @@ export default function Home() {
 
         return reader.read().then(processText);
       });
-
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((messages) => [
