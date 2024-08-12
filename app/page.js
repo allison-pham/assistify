@@ -8,9 +8,11 @@ export default function Home() {
   ]);
 
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false)
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || isLoading) return;
+    setIsLoading(true);
     setMessage("");
 
     const userMessage = { role: "user", content: message };
@@ -21,9 +23,6 @@ export default function Home() {
       userMessage,
       assistantMessage, // placeholder for the response
     ]);
-
-    console.log("Sending message:", userMessage);
-    console.log(messages);
 
     try {
       const response = await fetch("/api/chat", {
@@ -42,13 +41,14 @@ export default function Home() {
       const reader = myReadableStream.getReader();
       const decoder = new TextDecoder();
 
+
       return reader.read().then(function processText({ done, value }) {
         if (done) {
           console.log("Stream complete");
+          setIsLoading(false);
           return;
         }
         const chunk = decoder.decode(value, { stream: true });
-        console.log(chunk);
 
         setMessages((messages) => {
           let lastMessage = messages[messages.length - 1]; // last message (assistant's placeholder)
@@ -62,6 +62,7 @@ export default function Home() {
         return reader.read().then(processText);
       });
     } catch (error) {
+      setIsLoading(false);
       console.error("Error sending message:", error);
       setMessages((messages) => [
         ...messages,
@@ -118,9 +119,10 @@ export default function Home() {
             fullWidth
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            disabled={isLoading}
           />
-          <Button variant="contained" onClick={sendMessage}>
-            Send
+          <Button variant="contained" onClick={sendMessage} disabled={isLoading}>
+            {isLoading ? "Sending..." : "Send"}
           </Button>
         </Stack>
       </Stack>
