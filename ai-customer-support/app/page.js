@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Box, TextField, Button, Stack } from "@mui/material";
+
 export default function Home() {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hi, how can I help you today?" },
@@ -12,42 +13,55 @@ export default function Home() {
     setMessage("");
 
     const userMessage = { role: "user", content: message };
+    const assistantMessage = { role: "assistant", content: "" };
     // update the state of messages by appending a new message to the existing array of messages
     setMessages((prevMessages) => [
       ...prevMessages,
       userMessage,
+      assistantMessage, // placeholder for the response
     ]);
 
     console.log("Sending message:", userMessage);
     console.log(messages);
 
     try {
-      const response = await fetch(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "meta-llama/llama-3.1-8b-instruct:free",
-            messages: [...messages, userMessage],
-          }),
-        }
-      );
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([...messages, userMessage]),
+      });
+
 
       if (!response.ok) {
         throw new Error(`Error:  ${response.statusText}`);
       }
+      const myReadableStream = response.body;
+      const reader = myReadableStream.getReader();
+      const decoder = new TextDecoder();
 
-      const data = await response.json();
-      const assistantMessage = {
-        role: "assistant",
-        content: data.choices[0].message.content,
-      };
+      return reader.read().then(function processText({ done, value }) {
+        if (done) {
+          console.log("Stream complete");
+          return;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        console.log(chunk);
 
-      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+        setMessages((messages) => {
+          let lastMessage = messages[messages.length - 1]; // last message (assistant's placeholder)
+          let remainingMessages = messages.slice(0, messages.length - 1); // get messages from index 0 to messages.length-1
+          return [
+            ...remainingMessages,
+            { ...lastMessage, content: lastMessage.content + chunk },
+          ]; // append the decoded text to the assistant's message
+        });
+
+        return reader.read().then(processText);
+      });
+
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((messages) => [
