@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { Box, TextField, Button, Stack } from "@mui/material";
-
 export default function Home() {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hi, how can I help you today?" },
@@ -10,10 +9,17 @@ export default function Home() {
   const [message, setMessage] = useState("");
 
   const sendMessage = async () => {
+    setMessage("");
+
     const userMessage = { role: "user", content: message };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    // update the state of messages by appending a new message to the existing array of messages
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      userMessage,
+    ]);
 
     console.log("Sending message:", userMessage);
+    console.log(messages);
 
     try {
       const response = await fetch(
@@ -26,13 +32,13 @@ export default function Home() {
           },
           body: JSON.stringify({
             model: "meta-llama/llama-3.1-8b-instruct:free",
-            messages: [userMessage],
+            messages: [...messages, userMessage],
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        throw new Error(`Error:  ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -44,9 +50,15 @@ export default function Home() {
       setMessages((prevMessages) => [...prevMessages, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessages((messages) => [
+        ...messages,
+        {
+          role: "assistant",
+          content:
+            "I'm sorry, but I encountered an error. Please try again later.",
+        },
+      ]);
     }
-
-    setMessage("");
   };
 
   return (
