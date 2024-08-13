@@ -4,3 +4,11 @@
   margin: 0;
 }
 
+html, body {
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #6825E3 0%, #0c011c 100%);
+}
