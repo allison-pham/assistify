@@ -111,7 +111,7 @@ export default function Home() {
             {messages.map((message, index) => (
               <Box
                 key={index}
-                bgcolor={message.role === "assistant" ? "#6825E3" : "#4401D6"} // Colors matching the second screenshot
+                bgcolor={message.role === "assistant" ? "#6825E3" : "#4401D6"} // Colors matching the 2nd design screenshot
                 color="white"
                 borderRadius={8}
                 p={2}
